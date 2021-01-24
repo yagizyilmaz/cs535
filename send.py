@@ -3,6 +3,7 @@ import os
 from threading import Thread
 import time
 import random
+from Crypto.Protocol.SecretSharing import Shamir
 
 class Communication(Thread):
     def __init__(self, dst_ip, dst_port):
@@ -17,6 +18,7 @@ class Communication(Thread):
         s.connect((self.dst_ip, self.dst_port))
         print("[+] Connected.")
         return s
+
 
 class TCP_Sender:
     dst_ip = "x.x.x.x"
@@ -52,6 +54,7 @@ class TCP_Sender:
         s.close()
         del comm
 
+
     def send_file(self):
         comm = Communication(self.dst_ip, 80)
         comm2 = Communication(self.dst_ip, 20)
@@ -68,13 +71,8 @@ class TCP_Sender:
             left = self.filesize # amount of data left to be sent
             while True:
                 counter += 1
-                # read the bytes from the file
-                packet = bytearray() # filename and filesize
-                #packet.extend(bytearray((counter).to_bytes(4, 'big'))) # number of packet, 4 bytes
-                packet.extend(bytearray((self.filesize-left).to_bytes(4, 'big')))
-                #print(f"{self.filesize-left}, {packet}")
 
-                size = random.randint(1280,2559) # values acquired from the capture of my own traffic (we might need more reliable data about that)
+                size = 16
 
                 if (left // size):
                     sent = size
@@ -82,25 +80,33 @@ class TCP_Sender:
                     sent = left % size
 
 
-                packet.extend(bytearray((sent).to_bytes(4, 'big'))) # size of packet, 2 bytes
                 bytes_read = f.read(size)
-                packet.extend(bytes_read)
+                if len(bytes_read) != 0 and len(bytes_read) != 16:
+                    bytes_read += b'\x00' * (16 - len(bytes_read))
 
                 if not bytes_read: # break when there's nothing to be sent
                     break
 
-                select_conn = random.randint(0,2)
-                s_list[select_conn].sendall(packet)
+                shares = Shamir.split(2, 3, bytes_read)
+                for ctr, (idx, share) in enumerate(shares):
+                    packet = bytearray()
+                    packet.extend(bytearray((counter).to_bytes(4, 'big')))
+                    packet.extend(bytearray((idx).to_bytes(4, 'big')))
+                    packet.extend(bytes_read)
+                    s_list[ctr].sendall(packet)
+
+                # select_conn = random.randint(0,2)
+                # s_list[select_conn].sendall(packet)
 
                 left -= (sent) # update amount of data that will be sent
         s.close() # close the socket
 
 
 if __name__ == "__main__":
-    filename = "goldfish.jpg"
+    filename = "arch.jpg"
     filesize = os.path.getsize(filename)
 
-    TCP_Sender.send_info(filename, filesize, "10.37.129.4", 80)
+    TCP_Sender.send_info(filename, filesize, "127.0.0.1", 80)
     time.sleep(0.1) # this one is used to make sure that filename, and filesize sent
-    sender = TCP_Sender(filename, filesize, "10.37.129.4")
+    sender = TCP_Sender(filename, filesize, "127.0.0.1")
     sender.send_file()
