@@ -3,6 +3,8 @@ import os
 from threading import Thread
 from Crypto.Protocol.SecretSharing import Shamir
 from binascii import unhexlify
+import pyDH
+import time
 
 # shares = []
 # for x in range(2):
@@ -12,7 +14,7 @@ from binascii import unhexlify
 # key = Shamir.combine(shares)
 
 
-
+SENDER_DH_PUB_KEY = None
 RECIEVE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Received")
 if not os.path.exists(RECIEVE_PATH):
     os.mkdir(RECIEVE_PATH)
@@ -20,6 +22,7 @@ if not os.path.exists(RECIEVE_PATH):
 class Message:
     def __init__(self):
         self.filename, self.filesize = TCP_Listener.get_msg_info()
+        time.sleep(0.1) # to make sure other party is listening
         self.filename = os.path.join(RECIEVE_PATH, self.filename)
         self.msg_as_bytes = bytearray(self.filesize)
         self.checkpoint = 0
@@ -50,6 +53,33 @@ class Message:
         out = open(self.filename, "wb")
         out.write(self.msg_as_bytes)
 
+class Communication(Thread):
+    def __init__(self, dst_ip, dst_port):
+        Thread.__init__(self)
+        self.dst_ip = dst_ip
+        self.dst_port = dst_port
+
+    def create_socket(self):
+        print(f"[+] Connecting to {self.dst_ip}:{self.dst_port}")
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1) # disable Nagle algorithm
+        s.connect((self.dst_ip, self.dst_port))
+        print("[+] Connected.")
+        return s
+
+class TCP_Sender:
+    @classmethod
+    def send_dh_pub_key(cls, dh_pubkey, ip, port):
+        comm = Communication(ip, port)
+        s = comm.create_socket()
+
+        info = bytearray() # filename and filesize
+        info.extend(bytearray(dh_pubkey.to_bytes(256, 'big')))
+        s.send(info)
+        s.close()
+        del comm
+
+
 class TCP_Listener(Thread):
     #default values
     ip = "0.0.0.0"
@@ -78,14 +108,17 @@ class TCP_Listener(Thread):
         client_socket, address = s.accept()
 
         received = client_socket.recv(cls.buffer_size)
-        filename, filesize = received[:-8].decode(), int.from_bytes(received[-8:],'big') #first 8 byte is for file name, rest is for size
+        filename, filesize, dh_pubkey = received[:-264].decode(), int.from_bytes(received[-264:-256],'big'), int.from_bytes(received[-256:],'big') #first 8 byte is for file name, rest is for size
         #file_bytearray = bytearray(int(filesize))
         filename = os.path.basename(filename)
+        global SENDER_DH_PUB_KEY
+        SENDER_DH_PUB_KEY = dh_pubkey
 
         client_socket.close()
         s.close()
 
         return(filename, filesize)
+
 
     def handle(self):
         client_socket, address = self.s.accept()
@@ -144,6 +177,12 @@ class TCP_Listener(Thread):
 
 if __name__ == "__main__":
     msg = Message()
+    dh = pyDH.DiffieHellman()
+    dh_pubkey = dh.gen_public_key()
+    dh_sharedkey = dh.gen_shared_key(SENDER_DH_PUB_KEY)
+    TCP_Sender.send_dh_pub_key(dh_pubkey, "10.37.129.3", 80)
+
+    print(dh_sharedkey)
 
     th1 = TCP_Listener("0.0.0.0", 80, msg)
     th2 = TCP_Listener("0.0.0.0", 25, msg)
