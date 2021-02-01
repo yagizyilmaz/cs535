@@ -1,2 +1,4 @@
 Received/
-test.*
+*/test*
+*.pyc
+*.pyo

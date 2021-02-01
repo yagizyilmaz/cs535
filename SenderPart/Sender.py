@@ -222,9 +222,8 @@ class Sender:
 
 def main():
     sender = Sender("127.0.0.1")
-    # sender.send_file("test.file")
-    sender.send_file("test.dat")
-    sender.send_file("arch.jpg")
+ # [256,512,1024,2048,4096,8192]
+    sender.send_file(f"test2048")
 
 
 if __name__ == "__main__":

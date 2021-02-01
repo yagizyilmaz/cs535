@@ -222,7 +222,7 @@ class TCP_Listener(Thread):
                     print(f"[!] Starting Combiner from Listener of {self.port}")
                     combiner = Combiner()
                     combiner.start()
-                    
+
                 client_socket.close()
                 client_socket, address = self.s.accept()
 
@@ -279,6 +279,7 @@ class Combiner(Thread):
                                 MESSAGE_LIST[ip_addr][filecounter]['combined_count'] = 1
                             else:
                                 MESSAGE_LIST[ip_addr][filecounter]['combined_count'] += 1
+                            IP_FILE_LIST[ip_addr]['files'][filecounter]['combine_status'] = f"{MESSAGE_LIST[ip_addr][filecounter]['combined_count']}/{total_count - 1}"
 
                 ### TIMING ###
                 combine_end_timestamp = time.time()
@@ -309,7 +310,7 @@ class Combiner(Thread):
                         total_bytes = bytearray()
                         for i in range(total_count):
                             total_bytes.extend(MESSAGE_LIST[ip_addr][filecounter][i]['combined'])
-                            IP_FILE_LIST[ip_addr]['files'][filecounter]['combine_status'] = f"{i}/{total_count - 1}"
+                            
 
                         IP_FILE_LIST[ip_addr]['files'][filecounter]['combined'] = True
                         # print(total_bytes)
