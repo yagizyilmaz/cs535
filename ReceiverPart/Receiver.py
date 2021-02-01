@@ -53,7 +53,7 @@ def encrypt_message(msg_in_bytes, header_in_bytes, key):
     json_k = [ 'nonce', 'header', 'ciphertext', 'tag' ]
     json_v = [ b64encode(x).decode('utf-8') for x in (cipher.nonce, header, ciphertext, tag) ]
     result = json.dumps(dict(zip(json_k, json_v)))
-    print(result.encode())
+    return result.encode()
 
        
 
@@ -94,7 +94,7 @@ class Regular_Listener(Thread):
     def send_msg(cls, ip, port, msg, msg_type):
         comm = Communication(ip, port)
         s = comm.create_socket()
-
+        print("[!] Sending message with type: ", msg_type)
         info = bytearray() # filename and filesize
         msg_size = len(msg)
         info.extend(bytearray(msg_type.to_bytes(4, 'big')))
@@ -145,8 +145,11 @@ class Regular_Listener(Thread):
                     IP_FILE_LIST[address[0]]['files'][filecount] = {}
                     IP_FILE_LIST[address[0]]['files'][filecount]["filename"] = filename
                     IP_FILE_LIST[address[0]]['files'][filecount]["filesize"] = filesize
+                    IP_FILE_LIST[address[0]]['files'][filecount]['combined'] = False
+                    IP_FILE_LIST[address[0]]['files'][filecount]['combiner_started'] = False
+                    IP_FILE_LIST[address[0]]['files'][filecount]['combine_status'] = f"0/{filesize//16}"
                     self.send_msg(address[0], 81, str(filecount).encode(), 2)
-
+                    print(IP_FILE_LIST)
             client_socket.close()
 
     def run(self):
@@ -182,11 +185,12 @@ class TCP_Listener(Thread):
                 counter = int.from_bytes(packet_info[:4], 'big')
                 idx = int.from_bytes(packet_info[4:8], 'big')
                 filecounter = int.from_bytes(packet_info[8:12], 'big')
-                print(counter, idx, filecounter)
+                # print(counter, idx, filecounter)
 
                 # print(f"[+] Counter: {counter}\tidx: {idx}")
                 size = 16
                 bytes_read = bytearray(client_socket.recv(size))
+                # print("Bytes Read", bytes_read)
                 # if not bytes_read:
                 #     break
                 # point = starting_byte
@@ -196,9 +200,14 @@ class TCP_Listener(Thread):
                     MESSAGE_LIST[ip_addr] = {}
                 if filecounter not in MESSAGE_LIST[ip_addr].keys():
                     MESSAGE_LIST[ip_addr][filecounter] = {}
+                    IP_FILE_LIST[ip_addr]["files"][filecounter]["transfer_start"] = time.time()
 
                 if counter not in MESSAGE_LIST[ip_addr][filecounter].keys():
                     MESSAGE_LIST[ip_addr][filecounter][counter] = {}
+                ### TIMING ###
+                time_diff = ("%.4gs" % (time.time() - float(IP_FILE_LIST[ip_addr]["files"][filecounter]["transfer_start"])))
+                IP_FILE_LIST[ip_addr]["files"][filecounter]["transfer_time"] = time_diff
+                ### TIMING ###
                 if 'msgs' not in MESSAGE_LIST[ip_addr][filecounter][counter].keys():
                     MESSAGE_LIST[ip_addr][filecounter][counter]["msgs"] = [(idx, bytes_read)]
                 else:
@@ -206,16 +215,16 @@ class TCP_Listener(Thread):
             else:
                 # print(filesent, not COMBINER_RUNNING)
                 # print(filesent and not COMBINER_RUNNING)
-                with lock:
-                    if filesent and not COMBINER_RUNNING:
-                        print("\n\nHEHEHEHEHEHEHEHEHE\n\n")
-                        print(filesent, COMBINER_RUNNING)
-                        filesent = False
-                        COMBINER_RUNNING = True
-                        combiner = Combiner()
-                        combiner.start()
-                        client_socket.close()
-                        client_socket, address = self.s.accept()
+
+                if filesent and not COMBINER_RUNNING:
+                    filesent = False
+                    COMBINER_RUNNING = True
+                    print(f"[!] Starting Combiner from Listener of {self.port}")
+                    combiner = Combiner()
+                    combiner.start()
+                    
+                client_socket.close()
+                client_socket, address = self.s.accept()
 
         print(f"LISTENER FOR PORT {self.port} STOPPED")
 
@@ -244,12 +253,19 @@ class Receiver:
 
 class Combiner(Thread):
     def handle(self):
-        global MESSAGE_LIST, COMBINER_RUNNING
+        global MESSAGE_LIST, COMBINER_RUNNING, IP_FILE_LIST
         print("Combiner Running...")
-        time.sleep(5)
+        # begin = time.time()
         for ip_addr in list(MESSAGE_LIST):
             for filecounter in list(MESSAGE_LIST[ip_addr]):
                 total_count = IP_FILE_LIST[ip_addr]['files'][filecounter]['filesize'] // 16 + 1
+
+                ### TIMING ###
+                combine_start_timestamp = time.time()
+                IP_FILE_LIST[ip_addr]['files'][filecounter]['combine_start'] = combine_start_timestamp
+                IP_FILE_LIST[ip_addr]['files'][filecounter]['combiner_started'] = True
+                ### TIMING ###
+
                 for counter in list(MESSAGE_LIST[ip_addr][filecounter]):
                     if counter != 'combined_count':
                         if len(MESSAGE_LIST[ip_addr][filecounter][counter]["msgs"]) >= 2 and 'combined' not in MESSAGE_LIST[ip_addr][filecounter][counter].keys():
@@ -264,21 +280,39 @@ class Combiner(Thread):
                             else:
                                 MESSAGE_LIST[ip_addr][filecounter]['combined_count'] += 1
 
+                ### TIMING ###
+                combine_end_timestamp = time.time()
+                IP_FILE_LIST[ip_addr]['files'][filecounter]['combine_end'] = combine_end_timestamp
+                time_diff = ("%.4gs" % (combine_end_timestamp - combine_start_timestamp))
+                IP_FILE_LIST[ip_addr]['files'][filecounter]['combine_timespent'] = time_diff
+                ### TIMING ###
+
+
+
+        # print("MESSAGE LIST: ", MESSAGE_LIST)
         for ip_addr in list(MESSAGE_LIST):
             for filecounter in list(MESSAGE_LIST[ip_addr]):
-                total_count = IP_FILE_LIST[ip_addr]['files'][filecounter]['filesize'] // 16 + 1
+                if IP_FILE_LIST[ip_addr]['files'][filecounter]['filesize'] % 16 != 0:
+                    total_count = IP_FILE_LIST[ip_addr]['files'][filecounter]['filesize'] // 16 + 1
+                else:
+                    total_count = IP_FILE_LIST[ip_addr]['files'][filecounter]['filesize'] // 16
                 if 'combined_count' in MESSAGE_LIST[ip_addr][filecounter].keys():
                     # print(MESSAGE_LIST)
                     # print("_________________________\n\n")
                     # print(IP_FILE_LIST)
                     # print(MESSAGE_LIST[ip_addr][filecounter]['combined_count'], total_count)
                     # print(MESSAGE_LIST)
+                    # print("CHECK\n\n")
+                    # print(MESSAGE_LIST[ip_addr][filecounter]['combined_count'], total_count)
+                    # print("\n")
                     if MESSAGE_LIST[ip_addr][filecounter]['combined_count'] == total_count:
                         total_bytes = bytearray()
                         for i in range(total_count):
                             total_bytes.extend(MESSAGE_LIST[ip_addr][filecounter][i]['combined'])
+                            IP_FILE_LIST[ip_addr]['files'][filecounter]['combine_status'] = f"{i}/{total_count - 1}"
 
-                        print(total_bytes)
+                        IP_FILE_LIST[ip_addr]['files'][filecounter]['combined'] = True
+                        # print(total_bytes)
                         plaintext, header = decrypt_message(total_bytes, DH_KEYS[ip_addr]['SHARED_KEY'])
                         
                         print(f"[+] Writing to file...")
@@ -286,13 +320,15 @@ class Combiner(Thread):
                             f.write(plaintext)
 
                         del(MESSAGE_LIST[ip_addr][filecounter])
+                        # print("MESSAGE LIST AFTER DELETION: ", MESSAGE_LIST)
 
-
-        COMBINER_RUNNING = False
+        # end = time.time()
+        with lock:
+            COMBINER_RUNNING = False
 
 
     def run(self):
-        time.sleep(5)
+        time.sleep(4)
         self.handle()     
 
 

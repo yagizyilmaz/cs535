@@ -1,0 +1,64 @@
+Filename: test1
+
+Filesize: 1472
+Filecounter: 1
+Transfer Start Time: 1612139262.8409617
+Transfer Time Spent: 0.01171s
+Combine Started: True
+Combine Finished: True
+Combine Status: 91/91
+Combine Start Time: 1612139266.856186
+Combine End Time: 1612139267.1885624
+Combine Timespent: 0.3324s
+
+Filename: test2
+
+Filesize: 2836
+Filecounter: 2
+Transfer Start Time: 1612139293.1477315
+Transfer Time Spent: 0.02119s
+Combine Started: True
+Combine Finished: True
+Combine Status: 177/177
+Combine Start Time: 1612139297.1726718
+Combine End Time: 1612139297.8316886
+Combine Timespent: 0.659s
+
+Filename: test3
+
+Filesize: 4200
+Filecounter: 3
+Transfer Start Time: 1612139318.4794776
+Transfer Time Spent: 0.02876s
+Combine Started: True
+Combine Finished: True
+Combine Status: 262/262
+Combine Start Time: 1612139322.5126982
+Combine End Time: 1612139323.5276995
+Combine Timespent: 1.015s
+
+Filename: test4
+
+Filesize: 5568
+Filecounter: 4
+Transfer Start Time: 1612139337.4567914
+Transfer Time Spent: 0.03488s
+Combine Started: True
+Combine Finished: True
+Combine Status: 347/347
+Combine Start Time: 1612139341.495864
+Combine End Time: 1612139342.7464786
+Combine Timespent: 1.251s
+
+Filename: test5
+
+Filesize: 6932
+Filecounter: 5
+Transfer Start Time: 1612139352.3739965
+Transfer Time Spent: 0.04516s
+Combine Started: True
+Combine Finished: True
+Combine Status: 433/433
+Combine Start Time: 1612139356.4230533
+Combine End Time: 1612139358.010262
+Combine Timespent: 1.587s

