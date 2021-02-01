@@ -10,14 +10,23 @@
             <p class="article-title">Filename: {{ file.filename }}</p>
             <a class="article-content">Filesize: {{ file.filesize }}</a><br>
             <a class="article-content">Filecounter: {{ filecount }}</a><br>
+            <a class="article-content">Shamir On: {{ file.shamir_on }}</a><br>
             <a class="article-content">Transfer Start Time: {{ file.transfer_start }}</a><br>
             <a class="article-content">Transfer Time Spent: {{ file.transfer_time }}</a><br>
-            <a class="article-content">Combine Started: {{ file.combiner_started }}</a><br>
-            <a class="article-content">Combine Finished: {{ file.combined }}</a><br>
-            <a class="article-content">Combine Status: {{ file.combine_status }}</a><br>
-            <a class="article-content">Combine Start Time: {{ file.combine_start }}</a><br>
-            <a class="article-content">Combine End Time: {{ file.combine_end }}</a><br>
-            <a class="article-content">Combine Timespent: {{ file.combine_timespent }}</a><br><br>
+            {% if file.shamir_on %}
+              <a class="article-content">Combine Started: {{ file.combiner_started }}</a><br>
+              <a class="article-content">Combine Finished: {{ file.combined }}</a><br>
+              <a class="article-content">Combine Status: {{ file.combine_status }}</a><br>
+              <a class="article-content">Combine Start Time: {{ file.combine_start }}</a><br>
+              <a class="article-content">Combine End Time: {{ file.combine_end }}</a><br>
+              <a class="article-content">Combine Timespent: {{ file.combine_timespent }}</a><br><br>
+              <a class="article-content">Combine Timespent: {{ file.combine_timespent }}</a><br><br>
+            {% else %}
+              <a class="article-content">Decrypt Start Time: {{ file.combine_start }}</a><br>
+              <a class="article-content">Decrypt End Time: {{ file.decrypt_end }}</a><br>
+              <a class="article-content">Decrypt Timespent: {{ file.decrypt_timespent }}</a><br><br>
+              
+            {% endif %}
 
               {% endfor %}
           </div>

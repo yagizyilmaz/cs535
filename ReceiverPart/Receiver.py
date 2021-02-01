@@ -16,6 +16,7 @@ dh = None
 dh_pubkey = None
 IP_FILE_LIST = {}
 MESSAGE_LIST = {}
+
 COMBINER_RUNNING = False
 RECEIVE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Received")
 if not os.path.exists(RECEIVE_PATH):
@@ -134,6 +135,8 @@ class Regular_Listener(Thread):
                     dec_msg_json = json.loads(dec_msg)
                     filename = dec_msg_json['filename']
                     filesize = dec_msg_json['filesize']
+                    shamir_on = dec_msg_json['shamir_on']
+
                     if address[0] not in IP_FILE_LIST.keys():
                         IP_FILE_LIST[address[0]] = {}
                         IP_FILE_LIST[address[0]]['filecount'] = 1
@@ -145,6 +148,7 @@ class Regular_Listener(Thread):
                     IP_FILE_LIST[address[0]]['files'][filecount] = {}
                     IP_FILE_LIST[address[0]]['files'][filecount]["filename"] = filename
                     IP_FILE_LIST[address[0]]['files'][filecount]["filesize"] = filesize
+                    IP_FILE_LIST[address[0]]['files'][filecount]["shamir_on"] = shamir_on
                     IP_FILE_LIST[address[0]]['files'][filecount]['combined'] = False
                     IP_FILE_LIST[address[0]]['files'][filecount]['combiner_started'] = False
                     IP_FILE_LIST[address[0]]['files'][filecount]['combine_status'] = f"0/{filesize//16}"
@@ -208,10 +212,13 @@ class TCP_Listener(Thread):
                 time_diff = ("%.4gs" % (time.time() - float(IP_FILE_LIST[ip_addr]["files"][filecounter]["transfer_start"])))
                 IP_FILE_LIST[ip_addr]["files"][filecounter]["transfer_time"] = time_diff
                 ### TIMING ###
-                if 'msgs' not in MESSAGE_LIST[ip_addr][filecounter][counter].keys():
-                    MESSAGE_LIST[ip_addr][filecounter][counter]["msgs"] = [(idx, bytes_read)]
+                if idx != 10:
+                    if 'msgs' not in MESSAGE_LIST[ip_addr][filecounter][counter].keys():
+                        MESSAGE_LIST[ip_addr][filecounter][counter]["msgs"] = [(idx, bytes_read)]
+                    else:
+                        MESSAGE_LIST[ip_addr][filecounter][counter]["msgs"].append((idx, bytes_read))
                 else:
-                    MESSAGE_LIST[ip_addr][filecounter][counter]["msgs"].append((idx, bytes_read))
+                    MESSAGE_LIST[ip_addr][filecounter][counter]["combined"] = bytes_read
             else:
                 # print(filesent, not COMBINER_RUNNING)
                 # print(filesent and not COMBINER_RUNNING)
@@ -268,7 +275,7 @@ class Combiner(Thread):
 
                 for counter in list(MESSAGE_LIST[ip_addr][filecounter]):
                     if counter != 'combined_count':
-                        if len(MESSAGE_LIST[ip_addr][filecounter][counter]["msgs"]) >= 2 and 'combined' not in MESSAGE_LIST[ip_addr][filecounter][counter].keys():
+                        if 'combined' not in MESSAGE_LIST[ip_addr][filecounter][counter].keys() and len(MESSAGE_LIST[ip_addr][filecounter][counter]["msgs"]) >= 2:
                             shares = MESSAGE_LIST[ip_addr][filecounter][counter]["msgs"]
                             combined = Shamir.combine(shares)
                             if counter + 1 == total_count:
@@ -281,13 +288,13 @@ class Combiner(Thread):
                                 MESSAGE_LIST[ip_addr][filecounter]['combined_count'] += 1
                             IP_FILE_LIST[ip_addr]['files'][filecounter]['combine_status'] = f"{MESSAGE_LIST[ip_addr][filecounter]['combined_count']}/{total_count - 1}"
 
+
                 ### TIMING ###
                 combine_end_timestamp = time.time()
                 IP_FILE_LIST[ip_addr]['files'][filecounter]['combine_end'] = combine_end_timestamp
                 time_diff = ("%.4gs" % (combine_end_timestamp - combine_start_timestamp))
                 IP_FILE_LIST[ip_addr]['files'][filecounter]['combine_timespent'] = time_diff
                 ### TIMING ###
-
 
 
         # print("MESSAGE LIST: ", MESSAGE_LIST)
@@ -322,6 +329,14 @@ class Combiner(Thread):
 
                         del(MESSAGE_LIST[ip_addr][filecounter])
                         # print("MESSAGE LIST AFTER DELETION: ", MESSAGE_LIST)
+
+                ### TIMING ###
+                dec_end_timestamp = time.time()
+                IP_FILE_LIST[ip_addr]['files'][filecounter]['decrypt_end'] = dec_end_timestamp
+                time_diff = ("%.4gs" % (dec_end_timestamp - IP_FILE_LIST[ip_addr]['files'][filecounter]['combine_start']))
+                IP_FILE_LIST[ip_addr]['files'][filecounter]['decrypt_timespent'] = time_diff
+                ### TIMING ###
+
 
         # end = time.time()
         with lock:

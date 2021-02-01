@@ -142,7 +142,7 @@ class Sender:
             exit()
 
 
-    def send_file_info(self, filename, size, ip=None, port=None):
+    def send_file_info(self, filename, size, ip=None, port=None, shamir_on=True):
         if ip == None:
             ip = self.CNC
         if port == None:
@@ -151,6 +151,7 @@ class Sender:
         msg = {}
         msg["filename"] = os.path.basename(filename)
         msg["filesize"] = size
+        msg["shamir_on"] = shamir_on
 
         msg = json.dumps(msg)
         msg_in_bytes = msg.encode()
@@ -159,7 +160,7 @@ class Sender:
         self.send_msg(2, msg_encrypted, ip, port)
 
 
-    def send_file(self, filename, port_list=None, ip=None):
+    def send_file(self, filename, port_list=None, ip=None, shamir_on=True):
         if ip == None:
             ip = self.CNC        
         if port_list == None:
@@ -176,7 +177,9 @@ class Sender:
         counter = 0
         left = len(encrypted_data) # amount of data left to be sent
 
-        self.send_file_info(filename, left)
+
+        
+        self.send_file_info(filename, left, shamir_on=shamir_on)
 
         msg_type, result = TCP_Listener.get_next_message()
         if msg_type == 2:
@@ -204,14 +207,25 @@ class Sender:
             if len(bytes_read) == 0: # break when there's nothing to be sent
                 break
 
-            shares = Shamir.split(2, 3, bytes_read)
-            for ctr, (idx, share) in enumerate(shares):
+            if shamir_on:
+                shares = Shamir.split(2, 3, bytes_read)
+                for ctr, (idx, share) in enumerate(shares):
+                    packet = bytearray()
+                    packet.extend(bytearray((counter).to_bytes(4, 'big')))
+                    packet.extend(bytearray((idx).to_bytes(4, 'big')))
+                    packet.extend(bytearray((filecounter).to_bytes(4, 'big')))
+                    packet.extend(bytes_read)
+                    sockets[ctr].sendall(packet)
+            else:
                 packet = bytearray()
+                idx = 10 # Random value for shamir on/off check on the receiver end
                 packet.extend(bytearray((counter).to_bytes(4, 'big')))
                 packet.extend(bytearray((idx).to_bytes(4, 'big')))
                 packet.extend(bytearray((filecounter).to_bytes(4, 'big')))
                 packet.extend(bytes_read)
+                ctr = random.randint(0,2)
                 sockets[ctr].sendall(packet)
+
 
             left -= (sent) # update amount of data that will be sent
             counter += 1
@@ -223,8 +237,11 @@ class Sender:
 def main():
     sender = Sender("127.0.0.1")
  # [256,512,1024,2048,4096,8192]
-    sender.send_file(f"test2048")
-
+    # myList = [1,2,4,8,16,32,64,128,256,512,1024,2048]
+    # for i in myList:
+    #     sender.send_file(f"test{i}", shamir_on=False)
+    #     time.sleep(3)
+    # sender.send_file(f"test2048", shamir_on=False)
 
 if __name__ == "__main__":
     main()

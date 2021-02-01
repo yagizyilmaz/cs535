@@ -1,0 +1,132 @@
+127.0.0.1
+Filename: test1
+
+Filesize: 1472
+Filecounter: 1
+Shamir On: False
+Transfer Start Time: 1612200220.060646
+Transfer Time Spent: 0.002987s
+Decrypt Start Time: 1612200256.382572
+Decrypt End Time: 1612200256.4558074
+Decrypt Timespent: 0.07324s
+
+Filename: test2
+
+Filesize: 2836
+Filecounter: 2
+Shamir On: False
+Transfer Start Time: 1612200223.065764
+Transfer Time Spent: 0.002913s
+Decrypt Start Time: 1612200256.3826745
+Decrypt End Time: 1612200256.4558127
+Decrypt Timespent: 0.07314s
+
+Filename: test4
+
+Filesize: 5568
+Filecounter: 3
+Shamir On: False
+Transfer Start Time: 1612200226.0726001
+Transfer Time Spent: 0.006034s
+Decrypt Start Time: 1612200256.382862
+Decrypt End Time: 1612200256.455816
+Decrypt Timespent: 0.07295s
+
+Filename: test8
+
+Filesize: 11028
+Filecounter: 4
+Shamir On: False
+Transfer Start Time: 1612200229.0827138
+Transfer Time Spent: 0.01418s
+Decrypt Start Time: 1612200256.383247
+Decrypt End Time: 1612200256.4558196
+Decrypt Timespent: 0.07257s
+
+Filename: test16
+
+Filesize: 21952
+Filecounter: 5
+Shamir On: False
+Transfer Start Time: 1612200232.1049864
+Transfer Time Spent: 0.01909s
+Decrypt Start Time: 1612200256.3836873
+Decrypt End Time: 1612200256.4558222
+Decrypt Timespent: 0.07213s
+
+Filename: test32
+
+Filesize: 43796
+Filecounter: 6
+Shamir On: False
+Transfer Start Time: 1612200235.1310735
+Transfer Time Spent: 0.03294s
+Decrypt Start Time: 1612200256.3846264
+Decrypt End Time: 1612200256.455825
+Decrypt Timespent: 0.0712s
+
+Filename: test64
+
+Filesize: 87488
+Filecounter: 7
+Shamir On: False
+Transfer Start Time: 1612200238.1726007
+Transfer Time Spent: 0.06815s
+Decrypt Start Time: 1612200256.3865387
+Decrypt End Time: 1612200256.4558277
+Decrypt Timespent: 0.06929s
+
+Filename: test128
+
+Filesize: 174868
+Filecounter: 8
+Shamir On: False
+Transfer Start Time: 1612200241.227442
+Transfer Time Spent: 0.1711s
+Decrypt Start Time: 1612200256.3894434
+Decrypt End Time: 1612200256.45583
+Decrypt Timespent: 0.06639s
+
+Filename: test256
+
+Filesize: 349632
+Filecounter: 9
+Shamir On: False
+Transfer Start Time: 1612200244.3396494
+Transfer Time Spent: 0.2882s
+Decrypt Start Time: 1612200256.395481
+Decrypt End Time: 1612200256.4558327
+Decrypt Timespent: 0.06035s
+
+Filename: test512
+
+Filesize: 699156
+Filecounter: 10
+Shamir On: False
+Transfer Start Time: 1612200247.5852764
+Transfer Time Spent: 0.5982s
+Decrypt Start Time: 1612200256.4023643
+Decrypt End Time: 1612200256.4558353
+Decrypt Timespent: 0.05347s
+
+Filename: test1024
+
+Filesize: 1398208
+Filecounter: 11
+Shamir On: False
+Transfer Start Time: 1612200251.089227
+Transfer Time Spent: 1.316s
+Decrypt Start Time: 1612200256.4144826
+Decrypt End Time: 1612200256.4558377
+Decrypt Timespent: 0.04136s
+
+Filename: test2048
+
+Filesize: 2796308
+Filecounter: 13
+Shamir On: False
+Transfer Start Time: 1612200826.64137
+Transfer Time Spent: 2.534s
+Decrypt Start Time: 1612200833.2232692
+Decrypt End Time: 1612200833.2783914
+Decrypt Timespent: 0.05512s
